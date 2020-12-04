@@ -43,6 +43,6 @@ function restoreIfExists(string $path): void
 {
 	if (is_file($path)) {
 		print "Restoring {$path}..." . PHP_EOL;
-		`idea $path`;
+		`idea.sh $path`;
 	}
 }

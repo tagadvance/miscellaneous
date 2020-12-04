@@ -1,0 +1,48 @@
+#!/usr/bin/env php
+<?php
+
+/*
+ * Open all staged and unstaged files in IntelliJ IDEA.
+ */
+
+$status = `git status`;
+$isMergeConflict = strpos($status, 'both modified:') !== false;
+if ($isMergeConflict) {
+	print 'Merge conflict detected. Restoring unmerged paths...' . PHP_EOL;
+}
+
+$lines = explode(PHP_EOL, $status);
+foreach ($lines as $line) {
+	if ($isMergeConflict) {
+		// both modified; deleted by us ???
+		$pattern = '@both modified:\s+(.*)@';
+		$matches = [];
+		if (preg_match($pattern, $line, $matches)) {
+			[$_, $path] = $matches;
+			restoreIfExists($path);
+		}
+	} else {
+		// deleted: ???
+		$pattern = '@(modified|new file):\s+(.*)@';
+		$matches = [];
+		if (preg_match($pattern, $line, $matches)) {
+			[$_, $status, $path] = $matches;
+			restoreIfExists($path);
+		}
+
+		$pattern = '@renamed:\s+(.*) -> (.*)@';
+		$matches = [];
+		if (preg_match($pattern, $line, $matches)) {
+			[$_, $source, $destination] = $matches;
+			restoreIfExists($destination);
+		}
+	}
+}
+
+function restoreIfExists(string $path): void
+{
+	if (is_file($path)) {
+		print "Restoring {$path}..." . PHP_EOL;
+		`idea $path`;
+	}
+}

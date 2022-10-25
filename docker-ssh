@@ -4,4 +4,4 @@
 ## "SSH" into a docker container using a partial container name.
 ##
 
-docker exec -it `docker ps -a | grep $1 | cut -d' ' -f1` /bin/bash
+docker exec -it `docker ps -a | grep Up | grep $1 | cut -d' ' -f1` /bin/bash

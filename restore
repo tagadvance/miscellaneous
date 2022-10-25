@@ -8,41 +8,56 @@
 $status = `git status`;
 $isMergeConflict = strpos($status, 'both modified:') !== false;
 if ($isMergeConflict) {
-	print 'Merge conflict detected. Restoring unmerged paths...' . PHP_EOL;
+    print 'Merge conflict detected. Restoring unmerged paths...' . PHP_EOL;
 }
 
 $lines = explode(PHP_EOL, $status);
 foreach ($lines as $line) {
-	if ($isMergeConflict) {
-		// both modified; deleted by us ???
-		$pattern = '@both modified:\s+(.*)@';
-		$matches = [];
-		if (preg_match($pattern, $line, $matches)) {
-			[$_, $path] = $matches;
-			restoreIfExists($path);
-		}
-	} else {
-		// deleted: ???
-		$pattern = '@(modified|new file):\s+(.*)@';
-		$matches = [];
-		if (preg_match($pattern, $line, $matches)) {
-			[$_, $status, $path] = $matches;
-			restoreIfExists($path);
-		}
+    if ($isMergeConflict) {
+        // both modified; deleted by us ???
+        $pattern = '@both modified:\s+(.*)@';
+        $matches = [];
+        if (preg_match($pattern, $line, $matches)) {
+            [$_, $path] = $matches;
+            restoreIfExists($path);
+        }
+    } else {
+        // deleted: ???
+        $pattern = '@(modified|new file):\s+(.*)@';
+        $matches = [];
+        if (preg_match($pattern, $line, $matches)) {
+            [$_, $status, $path] = $matches;
+            restoreIfExists($path);
+        }
 
-		$pattern = '@renamed:\s+(.*) -> (.*)@';
-		$matches = [];
-		if (preg_match($pattern, $line, $matches)) {
-			[$_, $source, $destination] = $matches;
-			restoreIfExists($destination);
-		}
-	}
+        $pattern = '@renamed:\s+(.*) -> (.*)@';
+        $matches = [];
+        if (preg_match($pattern, $line, $matches)) {
+            [$_, $source, $destination] = $matches;
+            restoreIfExists($destination);
+        }
+    }
 }
 
 function restoreIfExists(string $path): void
 {
-	if (is_file($path)) {
-		print "Restoring {$path}..." . PHP_EOL;
-		`idea.sh $path`;
-	}
+    $app = getApp();
+
+    if (is_file($path)) {
+        print "Restoring {$path}..." . PHP_EOL;
+        `$app $path`;
+    }
+}
+
+function getApp(): string
+{
+    static $cachedApp = null;
+    if ($cachedApp === null) {
+        $apps = ['idea.sh', 'intellij-idea-ultimate'];
+        $apps = array_filter($apps, fn($app) => !empty(trim(`which $app`)));
+
+        $cachedApp = array_pop($apps);
+    }
+
+    return $cachedApp;
 }

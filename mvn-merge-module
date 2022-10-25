@@ -1,0 +1,189 @@
+#!/usr/bin/env php
+<?php
+
+if ($argc == 1) {
+    print "Example usage:" . PHP_EOL;
+	$script = basename($argv[0]);
+    print "\t$script path/to/source/module/ path/to/target/module/" . PHP_EOL;
+	print "\t$script path/to/source/module/ path/to/target/module/ --delete" . PHP_EOL;
+	exit;
+}
+
+$moduleFrom = $argv[1];
+$pomFrom = toPom($moduleFrom);
+$moduleTo = $argv[2];
+$pomTo = toPom($moduleTo);
+$delete = ($argv[3] ?? false) === '--delete';
+
+if (!file_exists($pomFrom) || !file_exists($pomTo)) {
+    exit('Please supply valid modules!');
+}
+
+$from = simplexml_load_file($pomFrom);
+$to = simplexml_load_file($pomTo);
+
+copyElement('build', $from, $to);
+copyElement('dependencies', $from, $to);
+
+$dom = new DOMDocument('1.0');
+$dom->preserveWhiteSpace = false;
+$dom->formatOutput = true;
+$dom->loadXML($to->asXML());
+$formattedXml = str_replace('  ', '    ', $dom->saveXML());
+file_put_contents($pomTo, $formattedXml);
+if ($delete) {
+    unlink($pomFrom);
+}
+
+function toPom(string $path): string
+{
+    $cwd = getcwd();
+
+    if (str_ends_with($path, '/')) {
+        $path = substr($path, 0, -1);
+    }
+
+    return "$cwd/$path/pom.xml";
+}
+
+function copyElement(string $name, SimpleXMLElement $from, SimpleXMLElement $to)
+{
+    if ($from->$name) {
+        if ($to->$name) {
+            mergeInto($from->$name, $to->$name);
+        } else {
+            copyElementInto($from->$name, $to);
+        }
+    }
+}
+
+function mergeInto(SimpleXMLElement $from, SimpleXMLElement $to)
+{
+    $attributesTo = $to->attributes();
+    foreach ($from->attributes() as $key => $value) {
+        unset($attributesTo[$key]);
+        $to->addAttribute($key, $value);
+    }
+
+    if ($from->hasChildren()) {
+        $children = $from->children();
+        $childrenByNameFrom = childrenByName($from);
+        if (count($children) === count($childrenByNameFrom)) {
+            // each element is distinct
+            $childrenByNameTo = childrenByName($to);
+            foreach ($childrenByNameFrom as $nameFrom => $valueFrom) {
+                if (isset($childrenByNameTo[$nameFrom])) {
+                    mergeInto($valueFrom, $childrenByNameTo[$nameFrom]);
+                } else {
+                    copyElementInto($valueFrom, $to);
+                }
+            }
+        } else {
+            // we're likely dealing with a list
+            $childrenByHashFrom = childrenByHash($from);
+            $childrenByHashTo = childrenByHash($to);
+            $toAdd = array_diff_key($childrenByHashFrom, $childrenByHashTo);
+            /**
+             * @var SimpleXMLElement $element
+             */
+            foreach ($toAdd as $element) {
+                $child = $to->addChild($element->getName());
+                foreach ($element as $key => $value) {
+                    $child->addChild($key, $value);
+                }
+            }
+        }
+    }
+}
+
+function childrenByName(SimpleXMLElement $e): array
+{
+    $children = $e->children();
+    $children = iterator_to_array($children, false);
+    return array_reduce(
+        $children,
+        function (array $carry, SimpleXMLElement $child) {
+            $carry[$child->getName()] = $child;
+
+            return $carry;
+        },
+        []
+    );
+}
+
+function childrenByHash(SimpleXMLElement $e): array
+{
+    $children = $e->children();
+    $children = iterator_to_array($children, false);
+    return array_reduce(
+        $children,
+        function (array $carry, SimpleXMLElement $child) {
+            $key = hashElement($child);
+            $carry[$key] = $child;
+
+            return $carry;
+        },
+        []
+    );
+}
+
+function hashElement(SimpleXMLElement $e)
+{
+    $s = serializeElement($e);
+
+    return sha1($s);
+}
+
+function serializeElement(SimpleXMLElement $e)
+{
+    $builder = $e->getName();
+
+    $builder .= '(';
+    $attributes = $e->attributes();
+    foreach ($attributes as $key => $value) {
+        $builder .= sprintf('"%s"="%s"', $key, $value) . ',';
+    }
+    $builder .= ')';
+
+    $text = trim($e->__toString());
+    if (!empty($text)) {
+        $builder .= sprintf('"%s"', $text);
+    }
+
+    $builder .= '[';
+    foreach ($e as $key => $value) {
+        $builder .= sprintf('"%s"="%s"', $key, $value) . ',';
+    }
+    $builder .= ']';
+
+    if ($e->hasChildren()) {
+        $builder .= '{';
+        $children = $e->getChildren();
+        foreach ($children as $child) {
+            $builder .= ihash($child) . ',';
+        }
+        $builder .= '}';
+    }
+
+    return $builder;
+}
+
+function copyElementInto(SimpleXMLElement $from, SimpleXMLElement $to)
+{
+    foreach ($from as $name => $value) {
+        if ($value instanceof SimpleXMLElement) {
+            $text = trim($value->__toString());
+            if (!empty($text)) {
+                $to->addChild($name, $text);
+
+                continue;
+            }
+        }
+
+        $childTo = $to->addChild($name);
+        foreach ($from->attributes() as $aName => $aValue) {
+            $childTo->addAttribute($aName, $aValue);
+        }
+        copyElementInto($value, $childTo);
+    }
+}

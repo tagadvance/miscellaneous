@@ -3,10 +3,10 @@
 
 if ($argc == 1) {
     print "Example usage:" . PHP_EOL;
-	$script = basename($argv[0]);
+    $script = basename($argv[0]);
     print "\t$script path/to/source/module/ path/to/target/module/" . PHP_EOL;
-	print "\t$script path/to/source/module/ path/to/target/module/ --delete" . PHP_EOL;
-	exit;
+    print "\t$script path/to/source/module/ path/to/target/module/ --delete" . PHP_EOL;
+    exit;
 }
 
 $moduleFrom = $argv[1];

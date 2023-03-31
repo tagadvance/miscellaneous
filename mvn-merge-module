@@ -3,15 +3,15 @@
 
 if ($argc == 1) {
     print "Example usage:" . PHP_EOL;
-    $script = basename($argv[0]);
+	$script = basename($argv[0]);
     print "\t$script path/to/source/module/ path/to/target/module/" . PHP_EOL;
-    print "\t$script path/to/source/module/ path/to/target/module/ --delete" . PHP_EOL;
-    exit;
+	print "\t$script path/to/source/module/ path/to/target/module/ --delete" . PHP_EOL;
+	exit;
 }
 
-$moduleFrom = $argv[1];
+$moduleFrom = rtrim($argv[1], '/');
 $pomFrom = toPom($moduleFrom);
-$moduleTo = $argv[2];
+$moduleTo = rtrim($argv[2], '/');
 $pomTo = toPom($moduleTo);
 $delete = ($argv[3] ?? false) === '--delete';
 
@@ -31,19 +31,36 @@ $dom->formatOutput = true;
 $dom->loadXML($to->asXML());
 $formattedXml = str_replace('  ', '    ', $dom->saveXML());
 file_put_contents($pomTo, $formattedXml);
+
+`rsync -a $moduleFrom/src/ $moduleTo/src/`;
+
 if ($delete) {
-    unlink($pomFrom);
+    `rm -rf $moduleFrom`;
+
+	$moduleName = basename($moduleFrom);
+	$projectDir = getMavenRootDir($pomTo);
+
+	$remnants = `grep -R '$moduleName' $projectDir/ | grep 'pom.xml:'`;
+	if ($remnants) {
+        print "The following files contain refs to '$moduleName'..." . PHP_EOL;
+        print $remnants . PHP_EOL;
+	}
 }
 
 function toPom(string $path): string
 {
     $cwd = getcwd();
 
-    if (str_ends_with($path, '/')) {
-        $path = substr($path, 0, -1);
-    }
-
     return "$cwd/$path/pom.xml";
+}
+
+function getMavenRootDir(string $path) {
+    do {
+        $previousPath = $path;
+        $path = dirname($path);
+    } while (file_exists("$path/pom.xml"));
+
+    return $previousPath;
 }
 
 function copyElement(string $name, SimpleXMLElement $from, SimpleXMLElement $to)

@@ -1,55 +1,7 @@
-#!/usr/bin/env  php
-<?php
+#!/bin/bash
 
-$script = array_shift($argv);
-$script = basename($script);
+##
+## Run a single command in a container
+##
 
-if ($argc < 3) {
-	print <<<USAGE
-usage: $script container_name command
-
-    container_name: A string that at least partially matches a container name.
-    command: The command to run in the container.
-
-USAGE;
-	exit(1);
-}
-
-$container = array_shift($argv);
-$container = findContainer($container);
-
-$command = implode(' ', $argv);
-
-dockerExec($container, $command);
-
-/**
- * Find a container ID
- * @param string $needle A [partial] container name
- * @return string A container ID
- */
-function findContainer(string $needle): string
-{
-	return trim(
-		`docker ps -a --filter 'name={$needle}' --format "{{.ID}}: {{.Names}}" | grep -v '_sync' | cut -d ':' -f1`
-	);
-}
-
-function dockerExec(string $containerId, string $command): int
-{
-	$safeCommand = escapeshellarg($command);
-
-	return passthruAndReturn("docker exec -it $containerId /bin/bash -c $safeCommand");
-}
-
-/**
- * Run `$command` using `passthru` then `exit` with child process's exit code.
- * @param string $command
- * @return int
- */
-function passthruAndReturn(string $command): int
-{
-	$exitCode = -1;
-	passthru($command, $exitCode);
-
-	return $exitCode;
-}
+docker exec $(docker ps --filter 'status=running' --filter "name=$1" -q | head -n 1) /bin/bash -c "$2"

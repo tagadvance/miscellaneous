@@ -4,4 +4,4 @@
 ## Run a single command in a container
 ##
 
-docker exec $(docker ps --filter 'status=running' --filter "name=$1" -q | head -n 1) /bin/bash -c "$2"
+docker exec $(docker ps --filter 'status=running' --filter "name=$1" -q | head -n 1) /usr/bin/sh -c "if [ -f /usr/bin/bash ]; then /usr/bin/bash -c '$2'; else /usr/bin/sh -c '$2'; fi"

@@ -39,6 +39,6 @@ for d in $(lsblk -dn -o NAME); do
   fi;
 done;
 
-if $all_passed; then
+if [[ "$1" != "--quiet" && $all_passed ]]; then
   ntfy_trace homelab "All drives are healthy.";
 fi

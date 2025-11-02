@@ -54,7 +54,7 @@ function toPom(string $path): string
     return "$cwd/$path/pom.xml";
 }
 
-function getMavenRootDir(string $path) {
+function getMavenRootDir(string $path): string {
     do {
         $previousPath = $path;
         $path = dirname($path);
@@ -63,7 +63,7 @@ function getMavenRootDir(string $path) {
     return $previousPath;
 }
 
-function copyElement(string $name, SimpleXMLElement $from, SimpleXMLElement $to)
+function copyElement(string $name, SimpleXMLElement $from, SimpleXMLElement $to): void
 {
     if ($from->$name) {
         if ($to->$name) {
@@ -74,7 +74,7 @@ function copyElement(string $name, SimpleXMLElement $from, SimpleXMLElement $to)
     }
 }
 
-function mergeInto(SimpleXMLElement $from, SimpleXMLElement $to)
+function mergeInto(SimpleXMLElement $from, SimpleXMLElement $to): void
 {
     $attributesTo = $to->attributes();
     foreach ($from->attributes() as $key => $value) {
@@ -144,14 +144,14 @@ function childrenByHash(SimpleXMLElement $e): array
     );
 }
 
-function hashElement(SimpleXMLElement $e)
+function hashElement(SimpleXMLElement $e): string
 {
     $s = serializeElement($e);
 
     return sha1($s);
 }
 
-function serializeElement(SimpleXMLElement $e)
+function serializeElement(SimpleXMLElement $e): string
 {
     $builder = $e->getName();
 
@@ -185,7 +185,7 @@ function serializeElement(SimpleXMLElement $e)
     return $builder;
 }
 
-function copyElementInto(SimpleXMLElement $from, SimpleXMLElement $to)
+function copyElementInto(SimpleXMLElement $from, SimpleXMLElement $to): void
 {
     foreach ($from as $name => $value) {
         if ($value instanceof SimpleXMLElement) {

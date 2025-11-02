@@ -6,7 +6,7 @@
  */
 
 $status = `git status`;
-$isMergeConflict = strpos($status, 'both modified:') !== false;
+$isMergeConflict = str_contains($status, 'both modified:');
 if ($isMergeConflict) {
     print 'Merge conflict detected. Restoring unmerged paths...' . PHP_EOL;
 }
@@ -44,7 +44,7 @@ function restoreIfExists(string $path): void
     $app = getApp();
 
     if (is_file($path)) {
-        print "Restoring {$path}..." . PHP_EOL;
+        print "Restoring $path..." . PHP_EOL;
         `$app $path`;
     }
 }
@@ -53,7 +53,7 @@ function getApp(): string
 {
     static $cachedApp = null;
     if ($cachedApp === null) {
-        $apps = ['idea.sh', 'intellij-idea-ultimate'];
+        $apps = ['idea', 'idea.sh', 'intellij-idea-ultimate'];
         $apps = array_filter($apps, fn($app) => !empty(trim(`which $app`)));
 
         $cachedApp = array_pop($apps);

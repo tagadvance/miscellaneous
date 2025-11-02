@@ -1,7 +1,14 @@
 #!/bin/bash
 
-[[ -z "${NTFY_HOST}" ]] && echo 'Missing NTFY_HOST environment variable'; exit 1; || NTFY_HOST="${NTFY_HOST}"
-[[ -z "${NTFY_BEARER_TOKEN}" ]] && echo 'Missing NTFY_BEARER_TOKEN environment variable'; exit 1; || NTFY_BEARER_TOKEN="${NTFY_BEARER_TOKEN}"
+if [[ -z "${NTFY_HOST}" ]]; then
+  echo 'Missing NTFY_HOST environment variable.' >&2
+  exit 1;
+fi
+
+if [[ -z "${NTFY_BEARER_TOKEN}" ]]; then
+  echo 'Missing NTFY_BEARER_TOKEN environment variable.' >&2
+  exit 1;
+fi
 
 ntfy_trace() {
     curl "https://$NTFY_HOST/$1" \

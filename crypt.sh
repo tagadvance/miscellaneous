@@ -1,6 +1,9 @@
 #!/bin/bash
 
-[[ -z "${CRYPT_PASSPHRASE}" ]] && echo 'Missing CRYPT_PASSPHRASE environment variable'; exit 1; || CRYPT_PASSPHRASE="${CRYPT_PASSPHRASE}"
+if [[ -z "${CRYPT_PASSPHRASE}" ]]; then
+  echo 'Missing CRYPT_PASSPHRASE environment variable.' >&2
+  exit 1;
+fi
 
 encrypt() {
     /usr/bin/nice /usr/bin/gpg -z 0 --batch --yes --output "$1.enc" --passphrase "$CRYPT_PASSPHRASE" --symmetric "$1"

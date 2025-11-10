@@ -4,4 +4,5 @@
 ## "SSH" into a docker container using a partial container name.
 ##
 
-docker exec -it $(docker ps --filter 'status=running' --filter "name=$1" -q | head -n 1) /usr/bin/sh -c 'if [ -f /usr/bin/bash ]; then /usr/bin/bash; else /usr/bin/sh; fi'
+docker exec -it $(docker ps --filter 'status=running' --filter "name=$1" -q | head -n 1) \
+    /bin/sh -c 'if [ -f /bin/bash ]; then /bin/bash; else /bin/sh; fi'

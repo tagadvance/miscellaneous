@@ -13,7 +13,8 @@ for d in $(lsblk -dn -o NAME); do
   status=$($smartctl --health /dev/$d | awk '/SMART overall-health/ {print $6}');
   if [[ "$status" != "PASSED" ]]; then
     all_passed=false;
-    ntfy_critical homelab "$d: $status";
+    ntfy_critical homelab "$HOSTNAME $d: $status";
+    exit 1
   fi
 
   if [[ $d == nvme* ]]; then
@@ -34,11 +35,12 @@ for d in $(lsblk -dn -o NAME); do
     ou=${ou:-0};
     if [[ $reallocated -gt 0 || $cps -gt 0 || $ou -gt 0 ]]; then
       all_passed=false;
-      ntfy_warning homelab "$d: $status (Temp: ${tempC}C, POH: $poh, Reallocated: $reallocated CPS: $cps, OU: $ou)"
+      ntfy_warning homelab "$HOSTNAME $d: $status (Temp: ${tempC}C, POH: $poh, Reallocated: $reallocated CPS: $cps, OU: $ou)"
+      exit 1
     fi;
   fi;
 done;
 
 if [[ "$1" != "--quiet" && $all_passed ]]; then
-  ntfy_trace homelab "All drives are healthy.";
+  ntfy_trace homelab "$HOSTNAME All drives are healthy.";
 fi

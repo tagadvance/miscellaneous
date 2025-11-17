@@ -1,0 +1,7 @@
+#!/bin/bash
+
+##
+## Check on the health of a container
+##
+
+docker inspect --format "{{json .State.Health }}" $(docker ps --filter 'status=running' --filter "name=$1" -q | head -n 1) | jq

@@ -4,4 +4,11 @@
 ## Check on the health of a container
 ##
 
-docker inspect --format "{{json .State.Health }}" $(docker ps --filter 'status=running' --filter "name=$1" -q | head -n 1) | jq
+formatter='jq'
+if ! command -v "$formatter" &> /dev/null; then
+    formatter='cat'
+fi
+
+docker inspect --format "{{ json .State.Health }}" \
+    "$(docker ps --filter 'status=running' --filter "name=$1" -q | head -n 1)" \
+    | $formatter

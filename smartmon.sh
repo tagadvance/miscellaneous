@@ -9,7 +9,7 @@ source "$(dirname "$(readlink -f "$0")")/ntfy.sh"
 smartctl=/usr/sbin/smartctl
 all_passed=true;
 
-for d in $(lsblk -dn -o NAME); do
+for d in $(lsblk -dn -o NAME | grep -vE '^(loop|loop[0-9]+|zram[0-9]+)$'); do
   status=$($smartctl --health /dev/$d | awk '/SMART overall-health/ {print $6}');
   if [[ "$status" != "PASSED" ]]; then
     all_passed=false;

@@ -18,11 +18,10 @@ fi
 
 paths=(
   "."
+  "$HOME"
+  '/etc'
   # the directory containing the script
   "$(dirname "$(readlink -f "$0")")"
-  "$HOME"
-  "/etc"
-  "/root"
 )
 
 for arg in "$@"; do

@@ -4,3 +4,9 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
   osascript -e 'quit app "Docker"'
   open -a Docker
 fi
+
+if [[ "$(uname -s)" == "Linux" ]]; then
+  if which systemctl > /dev/null; then
+    sudo systemctl restart docker
+  fi
+fi

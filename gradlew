@@ -21,9 +21,10 @@ find_up() {
   gradlew="$current_path/$1"
 }
 
-find_up 'gradlew'
+search='gradlew'
+find_up "$search"
 if [[ -f "$gradlew" ]]; then
-  eval "$gradlew" "$@"
+  eval "$gradlew" $@
 else
   echo "$search not found in current directory or any parent"
 fi
